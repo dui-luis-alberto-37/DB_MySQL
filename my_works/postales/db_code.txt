@@ -40,3 +40,11 @@ LINES TERMINATED BY '\n'
     d_zona,
     c_cve_ciudad
 );
+
+SELECT COUNT(DISTINCT d_ciudad) AS ciudad_unique_vals FROM cod_post;
+
+SELECT MAX(d_CP) AS CP_max_val, MIN(d_CP) AS CP_min_val FROM cod_post;
+
+SELECT DISTINCT d_asenta FROM cod_post WHERE d_asenta LIKE '%Maria%';
+
+SELECT d_zona, COUNT(*) AS total FROM cod_post WHERE d_zona IN ('Rural', 'Urbano') GROUP BY d_zona;
