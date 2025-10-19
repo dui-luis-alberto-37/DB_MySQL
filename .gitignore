@@ -1,5 +1,6 @@
 # Mine
 .vscode
+*_venv/
 db_distr/
 docker-compose.yml
 www/
