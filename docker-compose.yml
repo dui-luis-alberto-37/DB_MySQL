@@ -1,0 +1,48 @@
+version: "3.9"
+
+services:
+  apache:
+    image: php:8.3-apache
+    container_name: apache_php
+    volumes:
+      - ./www:/var/www/html
+    ports:
+      - "${APACHE_PORT}:${APACHE_PORT}"
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: testdb
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_USER_PASSWORD}
+    ports:
+      - "${DB_PORT}:${DB_PORT}"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./mysql-conf:/etc/mysql/conf.d
+    command: --local-infile=1
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${PYADMIN_PORT}:${APACHE_PORT}"
+    depends_on:
+      - db
+
+volumes:
+  db_data:
