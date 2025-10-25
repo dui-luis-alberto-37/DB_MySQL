@@ -4,6 +4,7 @@ services:
   apache:
     image: php:8.3-apache
     container_name: apache_php
+    restart: always
     volumes:
       - ./www:/var/www/html
     ports:
@@ -16,7 +17,7 @@ services:
     container_name: mysql_db
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: testdb
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_USER_PASSWORD}
@@ -25,6 +26,7 @@ services:
     volumes:
       - db_data:/var/lib/mysql
       - ./mysql-conf:/etc/mysql/conf.d
+      - ./mysql-init:/docker-entrypoint-initdb.d
     command: --local-infile=1
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
@@ -38,7 +40,7 @@ services:
     restart: always
     environment:
       PMA_HOST: db
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
     ports:
       - "${PYADMIN_PORT}:${APACHE_PORT}"
     depends_on:

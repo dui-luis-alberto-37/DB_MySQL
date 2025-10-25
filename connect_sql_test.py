@@ -9,7 +9,7 @@ load_dotenv()
 # Leer las variables
 DB_HOST = os.getenv("DB_HOST")
 DB_ROOT_USER = os.getenv("DB_ROOT_USER")
-DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_ROOT_PASSWORD = os.getenv("DB_ROOT_PASSWORD")
 DB_NAME = os.getenv("DB_NAME")
 DB_PORT = os.getenv("DB_PORT")
 
@@ -18,7 +18,7 @@ try:
     conn = mysql.connector.connect(
         host=DB_HOST,
         user=DB_ROOT_USER,
-        password=DB_PASSWORD,
+        password=DB_ROOT_PASSWORD,
         database=DB_NAME,
         port=DB_PORT
     )
