@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tables</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='css/estilos.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Tables</h2>
+
+        <!-- Formulario con method POST -->
+        <form id="searchForm" action="/search" method="POST">
+            <label for="filter">Buscar por:</label>
+            <select id="filter" name="filter" size="6" required>
+                <option value="codigo">Código</option>
+                <option value="asentamiento">Asentamiento</option>
+                <option value="tipo_asentamiento">Tipo de asentamiento</option>
+                <option value="municipio">Municipio</option>
+                <option value="estado">Estado</option>
+                <option value="ciudad">Ciudad</option>
+                <option value="cp_admin_postal">CP de Administración Postal</option>
+                <option value="clave_entidad">Clave Entidad</option>
+                <option value="clave_tipo_asentamiento">Clave tipo de asentamiento</option>
+                <option value="clave_municipio">Clave del Municipio</option>
+                <option value="id_asentamiento">Identificador del asentamiento</option>
+                <option value="zona_asentamiento">Zona del asentamiento</option>
+                <option value="clave_ciudad">Clave de la ciudad</option>
+            </select>
+
+            <label for="search">Inserte valor:</label>
+            <input type="text" id="search" name="search" placeholder="Escriba aquí..." required>
+
+            <button type="submit">Buscar</button>
+        </form>
+    </div>
+
+    <!-- <script>
+        // Ejemplo opcional: evitar recarga y enviar con fetch() a FastAPI
+        document.getElementById("searchForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const response = await fetch(e.target.action, {
+                method: e.target.method,
+                body: formData
+            });
+
+            const result = await response.text();
+            console.log(result);
+            alert("Búsqueda enviada correctamente.");
+        });
+    </script> -->
+</body>
+</html>

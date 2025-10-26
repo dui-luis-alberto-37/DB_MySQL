@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  web:
+    build: ./app
+    container_name: fastapi_web
+    ports:
+      - "8000:8000"       # host:container
+    volumes:
+      - ./app:/app        # para desarrollo en vivo
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    restart: always
