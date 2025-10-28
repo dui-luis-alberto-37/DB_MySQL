@@ -45,36 +45,59 @@ app.mount("/static", StaticFiles(directory="statics"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 async def form(request: Request):
-    print('loading form page')
     return template.TemplateResponse("index.html", {"request": request})
 
 @app.post("/search/")
 async def search(request: Request, filter: str = Form(...), search: str = Form(...)):
-    print('serch done')
+    dic = {
+        'codigo': 'd_codigo',
+        'asentamiento': 'd_asenta',
+        'tipo_asentamiento': 'd_tipo_asenta',
+        'municipio': 'D_mnpio',
+        'estado': 'd_estado',
+        'ciudad': 'd_ciudad',
+        'cp_admin_postal': 'd_CP',
+        'clave_entidad': 'c_estado',
+        'clave_tipo_asentamiento': 'c_tipo_asenta',
+        'clave_municipio': 'c_mnpio',
+        'id_asentamiento': 'id_asenta_cpcons',
+        'zona_asentamiento': 'd_zona',
+        'clave_ciudad': 'c_cve_ciudad',
+    }
+    filter = dic[filter]
     connection = get_connection()
     results = []
     message = ""
-
     if connection:
         try:
             cursor = connection.cursor(dictionary=True)
-            query = f"SELECT * FROM cod_post WHERE {filter} LIKE %s;"
-            cursor.execute(query, (f"%{search}%",))
+            query = f"SELECT * FROM cod_post WHERE {filter} LIKE '%{search}%';"
+            print(f"Executing query: {query}")
+            cursor.execute(query)
             results = cursor.fetchall()
             if not results:
                 message = "No se encontraron resultados."
+                return template.TemplateResponse("no_res.html", {
+                    "request": request,
+                    "message": message})
+            else:
+                columns = list(results[0].keys()) if results else []
+                
         except Error as e:
-            message = f"Error en la consulta: {e}"
+            message = f"Error en la consulta '{e}'"
+            return template.TemplateResponse("no_res.html", {
+                    "request": request,
+                    "message": message})
         finally:
             connection.close()
             print("Conexión cerrada.")
     else:
         message = "No se pudo conectar a la base de datos."
-    print(request, results, message)
     return template.TemplateResponse("response.html", {
         "request": request,
         "results": results,
-        "message": message
+        "message": message,
+        "columns": columns
     })
 
 

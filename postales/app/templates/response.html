@@ -4,12 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tables</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/estilos.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/table.css') }}">
 </head>
 <body>
-<h1>Hola mundo</h1>
-<p>resṕuesta :{{ request }}</p>
-
+<h1>Resultados de la busqueda</h1>
+<table>
+    <thead>
+        <tr>
+            {% for col in columns %}
+                <th>{{ col }}</th>
+            {% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in results %}
+            <tr>
+                {% for col in columns %}
+                    <td>{{ row[col] }}</td>
+                {% endfor %}
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
 
 </body>
 </html>
