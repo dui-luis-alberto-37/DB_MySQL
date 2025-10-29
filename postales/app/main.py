@@ -1,81 +1,108 @@
-from fastapi import FastAPI, Query
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi import FastAPI, Form, Request
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import HTMLResponse
 
 import mysql.connector
+from mysql.connector import Error
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST"),
-    "user": os.getenv("DB_ROOT_USER"),
-    "password": os.getenv("DB_ROOT_PASSWORD"),
-    "database": os.getenv("DB_NAME"),
-    "port": os.getenv("DB_PORT")
-}
+
+DB_HOST = os.getenv("DB_HOST")
+DB_ROOT_USER = os.getenv("DB_ROOT_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_ROOT_PASSWORD = os.getenv("DB_ROOT_PASSWORD")
+DB_NAME = os.getenv("DB_NAME")
+DB_PORT = os.getenv("DB_PORT")
 
 def get_connection():
-    return mysql.connector.connect(**DB_CONFIG)
+    print('getting conexion')
+    try:
+        conn = mysql.connector.connect(
+            host='mysql_db',
+            user=DB_ROOT_USER,
+            password=DB_ROOT_PASSWORD,
+            database=DB_NAME,
+            port=DB_PORT
+        )
+        
+        print('Conexión exitosa a la base de datos')
+        return conn
+    except Error as e:
+        print("Error conectando a MySQL:", e)
+        return None
 
 
+template = Jinja2Templates(directory="templates")
 
-app = FastAPI(title="API de Códigos Postales")
+app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.mount("/static", StaticFiles(directory="statics"), name="static")
 
-# Mapeo de los nombres "bonitos" a los nombres de columna en la DB
-FIELD_MAP = {
-    'Codigo': 'd_codigo',
-    'Asentamiento': 'd_asenta',
-    'Tipo de asentamiento': 'd_tipo_asenta',
-    'Municipio': 'D_mnpio',
-    'Estado': 'd_estado',
-    'Ciudad': 'd_ciudad',
-    'CP de Administracion Postal': 'd_CP',
-    'Clave Entidad': 'c_estado',
-    'Clave tipo de asentamiento': 'c_tipo_asenta',
-    'Clave del Municipio': 'c_mnpio',
-    'Idientificador del asentamiento': 'id_asenta_cpcons',
-    'Zona del asentamiento': 'd_zona',
-    'Clave de la ciudad': 'c_cve_ciudad',
-}
 
-@app.get("/buscar/")
-def buscar(campo: str = Query(..., description="Campo de búsqueda"), valor: str = Query(..., description="Valor a buscar")):
-    if campo not in FIELD_MAP:
-        return JSONResponse(status_code=400, content={"error": "Campo no válido"})
+@app.get("/", response_class=HTMLResponse)
+async def form(request: Request):
+    return template.TemplateResponse("index.html", {"request": request})
 
-    column = FIELD_MAP[campo]
+@app.post("/search/")
+async def search(request: Request, filter: str = Form(...), search: str = Form(...)):
+    dic = {
+        'codigo': 'd_codigo',
+        'asentamiento': 'd_asenta',
+        'tipo_asentamiento': 'd_tipo_asenta',
+        'municipio': 'D_mnpio',
+        'estado': 'd_estado',
+        'ciudad': 'd_ciudad',
+        'cp_admin_postal': 'd_CP',
+        'clave_entidad': 'c_estado',
+        'clave_tipo_asentamiento': 'c_tipo_asenta',
+        'clave_municipio': 'c_mnpio',
+        'id_asentamiento': 'id_asenta_cpcons',
+        'zona_asentamiento': 'd_zona',
+        'clave_ciudad': 'c_cve_ciudad',
+    }
+    filter = dic[filter]
+    connection = get_connection()
+    results = []
+    message = ""
+    if connection:
+        try:
+            cursor = connection.cursor(dictionary=True)
+            query = f"SELECT * FROM cod_post WHERE {filter} LIKE '%{search}%';"
+            print(f"Executing query: {query}")
+            cursor.execute(query)
+            results = cursor.fetchall()
+            if not results:
+                message = "No se encontraron resultados."
+                return template.TemplateResponse("no_res.html", {
+                    "request": request,
+                    "message": message})
+            else:
+                columns = list(results[0].keys()) if results else []
+                
+        except Error as e:
+            message = f"Error en la consulta '{e}'"
+            return template.TemplateResponse("no_res.html", {
+                    "request": request,
+                    "message": message})
+        finally:
+            connection.close()
+            print("Conexión cerrada.")
+    else:
+        message = "No se pudo conectar a la base de datos."
+        return template.TemplateResponse("no_res.html", {
+                    "request": request,
+                    "message": message})
+    return template.TemplateResponse("response.html", {
+        "request": request,
+        "results": results,
+        "message": message,
+        "columns": columns
+    })
 
-    conn = get_connection()
-    cursor = conn.cursor()
-    query = f"SELECT * FROM cod_post WHERE {column} LIKE %s;"
-    cursor.execute(query, (f"%{valor}%",))
-    cols = [desc[0] for desc in cursor.description]
-    rows = cursor.fetchall()
 
-    # Convertir a lista de diccionarios
-    data = [dict(zip(cols, row)) for row in rows]
-
-    cursor.close()
-    conn.close()
     
-    return {"count": len(data), "results": data}
 
-@app.get("/")
-def read_root():
-    return {"message": "¡Hola desde FastAPI en Docker (intento de actualizacion)!"}
-
-
-
-@app.get("/saludo/{nombre}")
-def saludo(nombre: str):
-    return {"saludo": f"Hola, {nombre}!"}
